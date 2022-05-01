@@ -1,34 +1,20 @@
-version: '3.7'
+version: '3.1'
 
 services:
+  # Many services
   cadvisor:
-    image: revenberg/cadvisor:latest
+    image: cadvisor
     container_name: cadvisor
-    restart: always
-    ports:
-      - 9000:9000
-    expose:
-      - 9000
-    environment:
-      - MQTT_ADDRESS=192.168.2.80
-      - MQTT_TOPIC=watermeter/reading/#
-      - PROMETHEUS_PREFIX=reading_
-      - TOPIC_LABEL=reading
-      - LOG_LEVEL=DEBUG
-
-  mqtt:
-    image: "eclipse-mosquitto:latest"
-    container_name: mqtt
-    environment:
-      - TZ=Europe/Amsterdam
-      - "MQTT_BROKER_URL=mqtt://127.0.0.1"
-    ports:
-      - 1883:1883
-      - 9001:9001
-    user: "1000:1000"
+    command: --raw_cgroup_prefix_whitelist=/docker/ --disable_metrics=hugetlb
+    build:
+      context: cadvisor
+    privileged: true
     volumes:
-      - /var/docker-compose/data/mqtt/config:/mosquitto/config
-      - /var/docker-compose/data/mqtt/data:/mosquitto/data
-      - /var/docker-compose/data/mqtt/log:/mosquitto/log
-    restart: always
-    network_mode: host
+      - '/:/rootfs:ro'
+      - '/var/run:/var/run:ro'
+      - '/sys:/sys:ro'
+      - '/var/lib/docker/:/var/lib/docker:ro'
+      - '/dev/disk/:/dev/disk:ro'
+    devices:
+      - '/dev/kmsg:/dev/kmsg'
+    restart: unless-stopped
